@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: front
+  name: front
+  namespace: kuber-13-2-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: front
+  template:
+    metadata:
+      labels:
+        app: front
+    spec:
+      containers:
+        - name: front
+          image: nginx:latest
+          imagePullPolicy: IfNotPresent
+          ports: 
+            - containerPort: 80
+              name: web
+              protocol: TCP
+          env:
+            - name: back-url
+              value: back
+            - name: back-port
+              value: "8080"
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+          - name: storage
+            mountPath: /mnt/storage 
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: prod-storage  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: front
+  namespace: kuber-13-2-prod
+spec:
+  ports:
+    - name: front
+      port: 80
+      nodePort: 32182
+      targetPort: 80
+  selector:
+    app: front
+  type: NodePort

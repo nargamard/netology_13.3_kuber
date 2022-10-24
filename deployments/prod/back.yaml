@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: back
+  name: back
+  namespace: kuber-13-2-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: back
+  template:
+    metadata:
+      labels:
+        app: back
+    spec:
+      containers:
+        - name: back
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command: [ "sleep", "5000" ]
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+          - name: storage
+            mountPath: /mnt/storage   
+          env:
+            - name: SECURE_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: POSTGRES_PASSWORD          
+            - name: SECURE_POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: POSTGRES_USER
+            - name: SECURE_POSTGRES_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: POSTGRES_PORT 
+            - name: SECURE_POSTGRES_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: POSTGRES_DBNAME
+            - name: SECURE_POSTGRES_SERVICE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysecret
+                  key: POSTGRES_SERVICE_NAME                            
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: prod-storage                                   
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: back
+  namespace: kuber-13-2-prod
+spec:
+  ports:
+    - name: back
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: back
+  type: ClusterIP

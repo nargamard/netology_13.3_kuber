@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: front-and-back
+  name: front-and-back
+  namespace: kuber-13-2-stage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: front-and-back
+  template:
+    metadata:
+      labels:
+        app: front-and-back
+    spec:
+      containers:
+        - name: front
+          image: nginx:latest
+          imagePullPolicy: IfNotPresent
+          ports: 
+            - containerPort: 80
+              name: web
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+            - mountPath: "/mnt/front"
+              name: static
+        - name: back
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command: [ "sleep", "5000" ]
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+            - mountPath: "/mnt/back"
+              name: static
+      volumes:
+        - name: static
+          emptyDir: {}
